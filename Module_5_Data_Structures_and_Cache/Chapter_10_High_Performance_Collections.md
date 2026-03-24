@@ -27,6 +27,15 @@
 - The linked-list structure guarantees pointer chasing and cache misses on get operations.
 - `HashMap<Integer, Integer>` is perhaps the most heavily used, yet least optimal structure for low-latency Java.
 
+```java
+// Standard HashMap forces boxing and object allocation
+Map<Integer, Integer> map = new HashMap<>();
+for (int i = 0; i < 1_000_000; i++) {
+    // Allocates: 2 Integer objects + 1 Map.Entry Node per iteration!
+    map.put(i, i * 2); 
+}
+```
+
 [Back to Top](#table-of-contents)
 
 ---
@@ -47,6 +56,18 @@
 - Linear probing means all data is stored directly in monolithic arrays.
 - During a lookup, the CPU cache line pulls in the target bucket *and* the adjacent buckets simultaneously. If a collision occurred, scanning linearly down the array triggers zero cache misses.
 
+```java
+// Conceptual Open Addressing Lookup
+int[] keys = ...;
+int hash = ThreadLocalRandom.current().nextInt();
+int pos = hash & (keys.length - 1);
+
+// Scan contiguous array linearly (extremely cache-friendly)
+while (keys[pos] != 0 && keys[pos] != targetKey) {
+    pos = (pos + 1) & (keys.length - 1); // Wrap around
+}
+```
+
 [Back to Top](#table-of-contents)
 
 ---
@@ -57,12 +78,32 @@
 - To achieve real speed and minimal GC overhead, low-latency engineers use domain-specific collections that eliminate object boxing and map entries entirely.
 - Instead of allocating instances, these libraries usually allocate two large, contiguous primitive arrays under the hood (e.g., a `long[]` for keys and a `long[]` for values) and rely on open addressing.
 
+### Everyday Analogy
+- Barron needs a toolkit for a highly specialized job requiring only metric wrenches.
+- **`java.util.Map`**: He is forced to carry a massive, heavy backpack containing every tool imaginable, most of which he doesn't need (Object overhead).
+- **Primitive-Backed Map**: He brings a single, lightweight toolbelt with exactly the metric wrenches he needs. No extra weight, maximum efficiency.
+
 ### Java-Specific Implementation
 - **Eclipse Collections**: Provides `IntObjectHashMap`, `LongLongHashMap`, etc. Heavily optimized for memory footprint.
 - **FastUtil**: Provides type-specific maps, sets, and queues (`Int2ObjectOpenHashMap`). Very fast, utilized extensively by data-heavy frameworks like Apache Spark.
 
 > **Best Practices:**
 > - When keys and values naturally map to primitives, substituting `java.util.Map` for an `Int2IntOpenHashMap` from FastUtil often yields a 5x memory reduction and a complete cessation of minor GC pauses.
+
+```java
+// Using FastUtil's primitive map
+// Zero boxing, zero Map.Entry allocations. Backed by contiguous int[] and long[]
+Int2IntOpenHashMap fastMap = new Int2IntOpenHashMap();
+for (int i = 0; i < 1_000_000; i++) {
+    fastMap.put(i, i * 2); // Put raw primitives directly
+}
+
+// Fast iteration without Iterator object allocation
+for (Int2IntMap.Entry entry : fastMap.int2IntEntrySet()) {
+    int key = entry.getIntKey();
+    int val = entry.getIntValue();
+}
+```
 
 [Back to Top](#table-of-contents)
 
@@ -75,6 +116,11 @@
 - The gold standard is moving data through **Shared Memory Ring Buffers**.
 - A Ring Buffer is a fixed-size, circular array. It requires zero memory allocation once initialized.
 
+### Everyday Analogy
+- Olivia (Producer) and Steve (Consumer) are working in a busy restaurant.
+- **Sockets/Queues**: Olivia creates a burger, walks over to Steve, waits for him to be free, and hands it to him (blocking and high overhead).
+- **Ring Buffer (Disruptor)**: They place a spinning "Lazy Susan" (circular tray) between their stations. Olivia constantly drops burgers onto empty spots on the tray and spins it. Steve constantly grabs burgers as they spin past. They never talk, wait, or bump into each other.
+
 ### Java-Specific Implementation
 - **Agrona**: A massive lock-free concurrent library used heavily in high-frequency trading. It provides Zero-Copy broadcast buffers directly over memory-mapped files via `VarHandle`/`Unsafe`. It never allocates objects during normal operation.
 - **The LMAX Disruptor**: A seminal messaging architecture that eliminates standard queue bottlenecks.
@@ -84,6 +130,18 @@
 
 > **Important Considerations:**
 > - Mechanical Sympathy reaches its ultimate form in the Disruptor pattern: pre-allocating contiguous arrays, padding sequence counters to avoid cache invalidations, and using memory fences instead of locks.
+
+```java
+// Conceptual LMAX Disruptor Ring Buffer pre-allocation
+// Zero objects are created during the actual message processing phase.
+Disruptor<TradeEvent> disruptor = new Disruptor<>(
+    TradeEvent::new,              // Factory creates empty objects up front
+    1024 * 1024,                  // Ring Buffer Size (Power of 2)
+    Executors.defaultThreadFactory(),
+    ProducerType.SINGLE,          // Single writer optimization
+    new BusySpinWaitStrategy()    // Ultra-low latency, burns CPU
+);
+```
 
 [Back to Top](#table-of-contents)
 
