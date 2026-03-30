@@ -83,4 +83,29 @@ If you take this job, do the following to prepare yourself for a future HFT role
 2. **Profile Everything:** Use this environment to practice your JVM profiling skills (using JMH, JFR, and basic `perf`). Find the bottlenecks in their Spring Boot stack. 
 3. **Continue your Low-Latency Curriculum:** Keep studying your `java-low-latency` material (LMAX Disruptor, Cache lines, Atomics). When you interview for an HFT firm in 2 years, that knowledge combined with your real-world FIX/Exchange experience will make you a highly competitive candidate.
 
+---
+
+## Credit Electronic Java Developer
+
+https://search.jobs.barclays/job/pune/credit-electronic-java-developer/13015/92190234080
+
+To be successful as a Credit Electronic Java Developer you should have experience with: -
+
+- Strong experience in Java (version 21+) software development including Spring Boot framework (version 3+) with strong core Java skills including but not limited to Generics, OOPS, Collections, Multithreading, I/O, Streams, REST, and JPA.
+- Strong knowledge on Microservice development using SpringBoot.
+- Proficient in reading, writing, and debugging multithreaded Java code.
+- Experience of memory and performance profiling.
+- Pub/sub middleware experience (eg. Kafka, MQ, Solace)
+- Tools experience - JIRA, GIT, Intellij IDEA, Gitlab and Docker.
+- Proficiency in unit testing (Junit 5), Karma or Jest and code quality metrics & BDD and TDD approach.
+- Strong Knowledge on relational databases (ideally MS SQL server DB/ Oracle).
+- Strong communication, problem solving and critical thinking skills with ability to understand complex problems and translate them into solutions.
+
+### Some other highly valued skills may include: -
+
+- Experience with technologies supporting development, continuous integration, automated testing and deployment.
+- Working experience in Agile Methodology.
+- Working experience in front office Markets Tech, preferably in trade capture/ pricing / risk domain.
+
+---
 
